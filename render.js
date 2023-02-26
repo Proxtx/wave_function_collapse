@@ -39,6 +39,7 @@ export class Renderer {
 
       return;
     }
+    return;
     for (let t in cell.tiles) {
       this.renderInnerImage(
         cell.tiles[t].image,
