@@ -92,8 +92,8 @@ class Tile {
 }
 
 const tilesToLoad = [];
-for (let i = 0; i <= 12; i++) {
-  tilesToLoad.push(`tiles/${i}.png`);
+for (let i = 0; i <= 32; i++) {
+  tilesToLoad.push(`mix/${i}.png`);
 }
 
 let images = {};
