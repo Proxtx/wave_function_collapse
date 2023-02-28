@@ -12,7 +12,8 @@ export class WaveFunctionCollapse {
         if (cells.length == 0 || cells[0].tiles.length == cell.tiles.length) {
           cells.push(cell);
         } else if (cells[0].tiles.length > cell.tiles.length) {
-          cells = [cell];
+          cells.push(cell);
+          //cells = [cell];
         }
       }
     }
@@ -20,58 +21,145 @@ export class WaveFunctionCollapse {
     return cells;
   }
 
-  autoSelect() {
+  async autoSelect() {
     let possibleCells = this.findCellWithLeastTiles();
+    if (possibleCells.length < 1) return true;
     shuffleArray(possibleCells);
     let cell = possibleCells[0];
-    shuffleArray(cell.tiles);
-    cell.tiles.splice(1, cell.tiles.length - 1);
-    this.checkNeighbors(cell, []);
+    let oldTiles = [...cell.tiles];
+    let tries = 0;
+    do {
+      await new Promise((r) => setTimeout(r, 100));
+      if (tries >= 20) {
+        window.renderer.ctx.fillStyle = "orange";
+        window.renderer.ctx.fillRect(
+          cell.x * window.renderer.cellWidth + window.renderer.cellWidth / 3,
+          cell.y * window.renderer.cellHeight + window.renderer.cellHeight / 3,
+          window.renderer.cellWidth / 3,
+          window.renderer.cellHeight / 3
+        );
+        cell.tiles = oldTiles;
+        //throw new Error("ahhh");
+        return false;
+      }
+      tries++;
+      cell.tiles = [oldTiles[Math.floor(Math.random() * oldTiles.length)]];
+      window.renderer.render();
+      console.log("attempting with tile", cell.tiles[0], "of", oldTiles);
+    } while (!this.checkNeighbors(cell) || !(await this.autoSelect()));
+    /*let possibleCells = this.findCellWithLeastTiles();
+    if(possibleCells.length < 1) return true;
+
+    let cell = possibleCells[Math.floor(Math.random() * possibleCells.length)]
+    let oldTiles = [...cell.tiles];
+    do {
+      await new Promise(r => setTimeout(r, 100));
+
+      
+    } while(!this.checkNeighbors(cell) &&)*/
   }
 
   removeTile(cell, index) {
-    cell.tiles.splice(index, 1);
-    this.checkNeighbors(cell, []);
+    let removed = cell.tiles.splice(index, 1);
+    if (!this.checkNeighbors(cell)) {
+      cell.tiles.splice(cell.tiles, 0, removed[0]);
+      return false;
+    }
+
+    return true;
   }
 
   checkNeighbors(cell) {
     if (cell.getTopCell())
-      this.checkNeighbor(cell, cell.getTopCell(), "n", "s");
+      if (!this.checkNeighbor(cell, cell.getTopCell(), "n", "s")) return false;
     if (cell.getRightCell())
-      this.checkNeighbor(cell, cell.getRightCell(), "e", "w");
+      if (!this.checkNeighbor(cell, cell.getRightCell(), "e", "w"))
+        return false;
     if (cell.getBottomCell())
-      this.checkNeighbor(cell, cell.getBottomCell(), "s", "n");
+      if (!this.checkNeighbor(cell, cell.getBottomCell(), "s", "n"))
+        return false;
     if (cell.getLeftCell())
-      this.checkNeighbor(cell, cell.getLeftCell(), "w", "e");
+      if (!this.checkNeighbor(cell, cell.getLeftCell(), "w", "e")) return false;
+
+    return true;
   }
 
   checkNeighbor(originalCell, neighborCell, matchOriginal, matchNeighbor) {
+    //window.renderer.render(true);
+    window.renderer.ctx.fillStyle = "red";
+    window.renderer.ctx.fillRect(
+      neighborCell.x * window.renderer.cellWidth +
+        window.renderer.cellWidth / 3,
+      neighborCell.y * window.renderer.cellHeight +
+        window.renderer.cellHeight / 3,
+      window.renderer.cellWidth / 3,
+      window.renderer.cellHeight / 3
+    );
+    console.log(originalCell, neighborCell);
     let removed = false;
 
-    for (let tileNeighborIndex in neighborCell.tiles) {
-      let tileNeighbor = neighborCell.tiles[tileNeighborIndex];
-      let saved = false;
-      for (let tileOriginal of originalCell.tiles) {
-        if (
-          tileOriginal.sockets[matchOriginal] ==
-          tileNeighbor.sockets[matchNeighbor]
-        ) {
-          saved = true;
+    do {
+      removed = false;
+      neighborTilesLoop: for (let tileNeighborIndex in neighborCell.tiles) {
+        let tileNeighbor = neighborCell.tiles[tileNeighborIndex];
+        let saved = false;
+        for (let tileOriginal of originalCell.tiles) {
+          if (
+            tileOriginal.sockets[matchOriginal] ==
+            tileNeighbor.sockets[matchNeighbor]
+          ) {
+            saved = true;
+          }
+        }
+
+        if (!saved) {
+          if (!this.removeTile(neighborCell, tileNeighborIndex)) return false;
+          removed = true;
+          break neighborTilesLoop;
         }
       }
+    } while (removed);
 
-      if (!saved) {
-        neighborCell.tiles[tileNeighborIndex] = undefined;
-        removed = true;
-      }
-    }
-
-    neighborCell.tiles = neighborCell.tiles.filter((element) => {
+    /*neighborCell.tiles = neighborCell.tiles.filter((element) => {
       return element !== undefined;
-    });
-    if (removed) {
-      this.checkNeighbors(neighborCell);
+    });*/
+    window.renderer.renderCell(
+      neighborCell,
+      neighborCell.x,
+      neighborCell.y,
+      true
+    );
+    if (neighborCell.tiles.length == 0) {
+      //return false;
+      //window.renderer.render(true);
+      window.renderer.ctx.fillStyle = "green";
+      window.renderer.ctx.fillRect(
+        neighborCell.x * window.renderer.cellWidth +
+          window.renderer.cellWidth / 3,
+        neighborCell.y * window.renderer.cellHeight +
+          window.renderer.cellHeight / 3,
+        window.renderer.cellWidth / 3,
+        window.renderer.cellHeight / 3
+      );
+      //throw new Error("0 Tiles Please Render");
     }
+    /*if (removed) {
+      if (!this.checkNeighbors(neighborCell)) return false;
+    }*/
+
+    if (neighborCell.tiles.length == 0) console.log("fail. reverting");
+    if (neighborCell.tiles.length == 0)
+      //throw new Error("error");
+      return false;
+
+    window.renderer.ctx.clearRect(
+      neighborCell.x * window.renderer.cellWidth +
+        window.renderer.cellWidth / 3,
+      neighborCell.y * window.renderer.cellHeight +
+        window.renderer.cellHeight / 3,
+      window.renderer.cellWidth / 3,
+      window.renderer.cellHeight / 3
+    );
 
     return true;
   }

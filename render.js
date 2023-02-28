@@ -9,19 +9,20 @@ export class Renderer {
     this.ctx = ctx;
   }
 
-  render() {
+  render(debug = false) {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     for (let row in this.grid.grid) {
       for (let column in this.grid.grid[row]) {
-        this.renderCell(this.grid.getCell(row, column), row, column);
+        this.renderCell(this.grid.getCell(row, column), row, column, debug);
       }
     }
   }
 
-  renderCell(cell, x, y) {
+  renderCell(cell, x, y, debug = false) {
     let posX = x * (this.cellWidth + 0);
     let posY = y * (this.cellHeight + 0);
-    this.ctx.fillRect(posX, posY, this.cellWidth, this.cellHeight, "black");
+    this.ctx.fillStyle = "black";
+    this.ctx.fillRect(posX, posY, this.cellWidth, this.cellHeight);
     if (cell.tiles.length == 1) {
       this.ctx.save();
       this.ctx.translate(posX + this.cellWidth / 2, posY + this.cellHeight / 2);
@@ -39,7 +40,7 @@ export class Renderer {
 
       return;
     }
-    return;
+    if (!debug) return;
     for (let t in cell.tiles) {
       this.renderInnerImage(
         cell.tiles[t].image,

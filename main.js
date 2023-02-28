@@ -6,21 +6,29 @@ import { WaveFunctionCollapse } from "./wave.js";
 window.ctx = ctx;
 
 let grid = new Grid(
-  Math.floor(canvas.width / 50) + 1,
-  Math.floor(canvas.height / 50) + 1
+  5, //Math.floor(canvas.width / 50),
+  5 //Math.floor(canvas.height / 50)
 );
 let renderer = new Renderer(canvas, ctx, grid, 50, 50);
+
+window.renderer = renderer;
 
 let wave = new WaveFunctionCollapse(grid);
 
 const step = async () => {
   wave.autoSelect();
-  renderer.render();
-  await new Promise((r) => setTimeout(r, 100));
+  renderer.render(true);
+  await new Promise((r) => setTimeout(r, 10));
 };
 
-while (wave.findCellWithLeastTiles().length > 0) {
+wave.autoSelect();
+
+/*while (wave.findCellWithLeastTiles().length > 0) {
   await step();
-}
+}*/
+
+/*window.addEventListener("click", () => {
+  step();
+});*/
 
 //renderer.render();

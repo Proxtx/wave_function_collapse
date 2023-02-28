@@ -1,6 +1,8 @@
 import { ctx } from "./canvas.js";
+import { images } from "./images.js";
 
-let edgeIds = {};
+let detail = 3;
+//TODO: Implement detail
 
 const componentToHex = (c) => {
   var hex = c.toString(16);
@@ -9,12 +11,6 @@ const componentToHex = (c) => {
 
 const rgbToHex = ([r, g, b]) => {
   return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
-};
-
-const getEdgeId = (edgeData) => {
-  if (!edgeIds[edgeData])
-    edgeIds[edgeData] = Math.floor(Math.random() * 1000000000);
-  return edgeIds[edgeData];
 };
 
 class Tile {
@@ -89,20 +85,6 @@ class Tile {
 
     this.sockets = edges;
   }
-}
-
-const tilesToLoad = [];
-for (let i = 0; i <= 32; i++) {
-  tilesToLoad.push(`mix/${i}.png`);
-}
-
-let images = {};
-
-for (let tileName in tilesToLoad) {
-  let img = new Image();
-  img.src = tilesToLoad[tileName];
-  await new Promise((r) => (img.onload = r));
-  images[tileName] = img;
 }
 
 export let tiles = [];
